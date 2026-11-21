@@ -1,0 +1,37 @@
+// Writes the entry joke to <output>/entry.txt.
+//
+// The entry is one line of text: a joke about working beside an AI coding
+// agent. The program's whole job is to place that line, byte for byte, in
+// the output directory the grader hands it. It does nothing else on purpose:
+// the joke is the entry, and the program is only its courier.
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
+// The joke. One line, 113 Unicode code points, inside the 1-280 gate.
+const JOKE =
+  "My agent said 'done' and the tests passed — the tests it wrote, for the code it wrote, against the spec it wrote.";
+
+function outputDir(): string {
+  return process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
+}
+
+// Empty the output directory without removing the directory itself: the
+// grader mounts it, so deleting it fails with EBUSY. Only its contents go.
+function clearContents(dir: string): void {
+  mkdirSync(dir, { recursive: true });
+  for (const name of readdirSync(dir)) {
+    rmSync(join(dir, name), { recursive: true, force: true });
+  }
+}
+
+function main(): void {
+  const points = [...JOKE].length;
+  if (points < 1 || points > 280 || JOKE.trim().length === 0) {
+    throw new Error(`entry is ${points} code points, outside the 1-280 gate`);
+  }
+  const dir = outputDir();
+  clearContents(dir);
+  writeFileSync(join(dir, "entry.txt"), JOKE, "utf8");
+}
+
+main();
